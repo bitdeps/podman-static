@@ -135,7 +135,7 @@ verify-signature:
 		for _ in `seq 1 10`; do \
 			TMPDIR=$$(mktemp -d); \
 			export GNUPGHOME=$$TMPDIR; \
-			gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0CCF102C4F95D89E583FF1D4F8B5AF50344BB503 && \
+			gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys F1620680A39BF56C4474BE7408FFBC7B8299FE71 && \
 			gpg --list-keys && \
 			gpg --batch --verify $(ASSET_DIR).tar.gz.asc $(ASSET_DIR).tar.gz && \
 			rm -rf $$TMPDIR && \

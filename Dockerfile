@@ -4,7 +4,7 @@ RUN apk add --no-cache gnupg
 
 
 # runc
-FROM golang:1.22-alpine3.20 AS runc
+FROM golang:1.23-alpine3.20 AS runc
 ARG RUNC_VERSION=v1.2.2
 # Download runc binary release since static build doesn't work with musl libc anymore since 1.1.8, see https://github.com/opencontainers/runc/issues/3950
 RUN set -eux; \
@@ -16,7 +16,7 @@ RUN set -eux; \
 
 
 # podman build base
-FROM golang:1.22-alpine3.20 AS podmanbuildbase
+FROM golang:1.23-alpine3.20 AS podmanbuildbase
 RUN apk add --update --no-cache git make gcc pkgconf musl-dev \
 	btrfs-progs btrfs-progs-dev libassuan-dev lvm2-dev device-mapper \
 	glib-static libc-dev gpgme-dev protobuf-dev protobuf-c-dev \
@@ -28,7 +28,7 @@ RUN apk add --update --no-cache git make gcc pkgconf musl-dev \
 FROM podmanbuildbase AS podman
 RUN apk add --update --no-cache tzdata curl
 ARG PODMAN_VERSION=v5.3.1
-ARG PODMAN_BUILDTAGS='seccomp selinux apparmor exclude_graphdriver_devicemapper containers_image_openpgp'
+ARG PODMAN_BUILDTAGS='seccomp selinux apparmor exclude_graphdriver_devicemapper containers_image_openpgp cni'
 ARG PODMAN_CGO=1
 RUN git clone -c 'advice.detachedHead=false' --depth=1 --branch ${PODMAN_VERSION} https://github.com/containers/podman src/github.com/containers/podman
 WORKDIR $GOPATH/src/github.com/containers/podman
@@ -172,6 +172,20 @@ RUN set -ex; \
 	/usr/local/lib/podman/conmon --help >/dev/null
 ENV _CONTAINERS_USERNS_CONFIGURED=""
 
+# CNI plugins
+FROM podmanbuildbase AS cniplugins
+ARG CNI_PLUGIN_VERSION=v1.6.2
+ARG CNI_PLUGINS="ipam/host-local main/loopback main/bridge meta/portmap meta/tuning meta/firewall"
+RUN git clone -c 'advice.detachedHead=false' --depth=1 --branch=${CNI_PLUGIN_VERSION} https://github.com/containernetworking/plugins /go/src/github.com/containernetworking/plugins
+WORKDIR /go/src/github.com/containernetworking/plugins
+RUN set -ex; \
+       for PLUGINDIR in $CNI_PLUGINS; do \
+               PLUGINBIN=/usr/local/lib/cni/$(basename $PLUGINDIR); \
+               CGO_ENABLED=0 go build -o $PLUGINBIN -ldflags "-s -w -extldflags '-static'" ./plugins/$PLUGINDIR; \
+               ! ldd $PLUGINBIN; \
+       done
+
+
 # Build rootless podman base image (without OCI runtime)
 FROM podmanbase AS rootlesspodmanbase
 ENV BUILDAH_ISOLATION=chroot container=oci
@@ -191,3 +205,5 @@ COPY --from=catatonit /catatonit/catatonit /usr/local/lib/podman/catatonit
 COPY --from=runc   /usr/local/bin/runc   /usr/local/bin/runc
 COPY --from=aardvark-dns /aardvark-dns/target/release/aardvark-dns /usr/local/lib/podman/aardvark-dns
 COPY --from=podman /etc/containers/seccomp.json /etc/containers/seccomp.json
+COPY --from=cniplugins /usr/local/lib/cni /usr/local/lib/cni
+COPY conf/cni /etc/cni
