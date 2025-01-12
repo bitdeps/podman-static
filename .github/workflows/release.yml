@@ -106,5 +106,5 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
-        asset-paths: |
+        asset_paths: |
           ["./build/asset/podman-linux-*.tar.gz", "./build/asset/podman-linux-*.tar.gz.asc"]
