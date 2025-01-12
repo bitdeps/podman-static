@@ -102,8 +102,8 @@ jobs:
       id: release
 
     - name: Upload release assets
-      uses: alexellis/upload-assets@0.4.0
+      uses: jaywcjlove/github-action-upload-assets@v1.1.1
       if: steps.existing-release.outputs.id != '' || steps.release.outputs.id != ''
       with:
-        asset-paths: |
+        asset-path: |
           ["./build/asset/podman-linux-*.tar.gz", "./build/asset/podman-linux-*.tar.gz.asc"]
