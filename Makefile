@@ -40,6 +40,10 @@ multiarch-tar: BUILDX_OUTPUT = type=local,dest=$(IMAGE_EXPORT_DIR)
 multiarch-tar: TAR_TARGET ?= tar
 multiarch-tar: images tar-all
 
+# Single arch builds don't have nested arch directory, thus set path as for multiarch
+singlearch-tar: BUILDX_OUTPUT = type=local,dest=$(IMAGE_EXPORT_DIR)/linux_$(ARCH)
+singlearch-tar: images tar
+
 multiarch-images: BUILDX_OUTPUT = type=image
 multiarch-images: images
 
@@ -131,7 +135,7 @@ verify-signature:
 		for _ in `seq 1 10`; do \
 			TMPDIR=$$(mktemp -d); \
 			export GNUPGHOME=$$TMPDIR; \
-			gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys 0CCF102C4F95D89E583FF1D4F8B5AF50344BB503 && \
+			gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys F1620680A39BF56C4474BE7408FFBC7B8299FE71 && \
 			gpg --list-keys && \
 			gpg --batch --verify $(ASSET_DIR).tar.gz.asc $(ASSET_DIR).tar.gz && \
 			rm -rf $$TMPDIR && \

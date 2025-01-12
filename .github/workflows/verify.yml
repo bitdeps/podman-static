@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Check out code
@@ -28,6 +28,5 @@ jobs:
     - name: Build & test linux/amd64 image
       run: make images test
 
-    - name: Build multi-arch images and binaries
-      run: make clean multiarch-tar
-
+    - name: Build linux/amd64 images and binaries
+      run: make clean singlearch-tar
