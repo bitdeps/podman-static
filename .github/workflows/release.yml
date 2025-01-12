@@ -105,6 +105,5 @@ jobs:
       uses: alexellis/upload-assets@0.4.0
       if: steps.existing-release.outputs.id != '' || steps.release.outputs.id != ''
       with:
-        tag: v1.1.1
-        asset-path: |
+        asset-paths: |
           ["./build/asset/podman-linux-*.tar.gz", "./build/asset/podman-linux-*.tar.gz.asc"]
